@@ -20,6 +20,7 @@ public class ToDoRepository {
         ToDo todo = new ToDo();
         todo.setTitle(title);
         todo.setDetails(details);
+        todo.setFinished(false);
         addTask.execute(todo);
     }
 
@@ -28,12 +29,13 @@ public class ToDoRepository {
         getTask.execute();
     }
 
-    public void updateToDo(int id, String title, String details) {
+    public void updateToDo(int id, String title, String details, boolean finished) {
         UpdateToDoTask updateTask = new UpdateToDoTask(mContext);
         ToDo todo = new ToDo();
         todo.setId(id);
         todo.setTitle(title);
         todo.setDetails(details);
+        todo.setFinished(finished);
         updateTask.execute(todo);
     }
 

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,6 +17,7 @@ import com.promlert.mytodo.db.ToDoRepository;
 public class UpdateToDoActivity extends AppCompatActivity {
 
     private EditText mTitleEditText, mDetailsEditText;
+    private CheckBox mFinishedCheckBox;
     private ToDo mToDo;
 
     @Override
@@ -28,9 +30,11 @@ public class UpdateToDoActivity extends AppCompatActivity {
 
         mTitleEditText = findViewById(R.id.title_edit_text);
         mDetailsEditText = findViewById(R.id.details_edit_text);
+        mFinishedCheckBox = findViewById(R.id.finished_check_box);
 
         mTitleEditText.setText(mToDo.getTitle());
         mDetailsEditText.setText(mToDo.getDetails());
+        mFinishedCheckBox.setChecked(mToDo.isFinished());
 
         Button saveButton = findViewById(R.id.save_button);
         saveButton.setOnClickListener(new View.OnClickListener() {
@@ -67,9 +71,10 @@ public class UpdateToDoActivity extends AppCompatActivity {
         if (validateForm()) {
             String title = mTitleEditText.getText().toString().trim();
             String details = mDetailsEditText.getText().toString().trim();
+            boolean finished = mFinishedCheckBox.isChecked();
 
             ToDoRepository repo = new ToDoRepository(UpdateToDoActivity.this);
-            repo.updateToDo(mToDo.getId(), title, details);
+            repo.updateToDo(mToDo.getId(), title, details, finished);
             finish();
         }
     }

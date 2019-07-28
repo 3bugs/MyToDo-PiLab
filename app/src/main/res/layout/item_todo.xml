@@ -14,25 +14,47 @@
     card_view:cardCornerRadius="2dp"
     tools:ignore="UnusedAttribute">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="6dp">
 
         <TextView
             android:id="@+id/title_text_view"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
             android:text="Title"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Headline" />
+            android:textAppearance="@style/Base.TextAppearance.AppCompat.Headline"
+            card_view:layout_constraintBottom_toTopOf="@+id/details_text_view"
+            card_view:layout_constraintEnd_toStartOf="@+id/finished_check_box"
+            card_view:layout_constraintStart_toStartOf="parent"
+            card_view:layout_constraintTop_toTopOf="parent"
+            card_view:layout_constraintVertical_chainStyle="packed" />
 
         <TextView
             android:id="@+id/details_text_view"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Details"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium" />
+            android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
+            card_view:layout_constraintBottom_toBottomOf="parent"
+            card_view:layout_constraintEnd_toEndOf="parent"
+            card_view:layout_constraintStart_toStartOf="parent"
+            card_view:layout_constraintTop_toBottomOf="@+id/title_text_view" />
 
-    </LinearLayout>
+        <CheckBox
+            android:id="@+id/finished_check_box"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:text="Finished"
+            card_view:layout_constraintBottom_toBottomOf="@+id/title_text_view"
+            card_view:layout_constraintEnd_toEndOf="parent"
+            card_view:layout_constraintTop_toTopOf="@+id/title_text_view" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

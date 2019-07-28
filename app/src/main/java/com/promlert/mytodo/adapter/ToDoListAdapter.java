@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.promlert.mytodo.R;
 import com.promlert.mytodo.UpdateToDoActivity;
 import com.promlert.mytodo.db.ToDo;
+import com.promlert.mytodo.db.ToDoRepository;
 
 import java.util.List;
 
@@ -38,6 +41,16 @@ public class ToDoListAdapter extends RecyclerView.Adapter<ToDoListAdapter.MyView
         ToDo todo = mToDoList.get(position);
         holder.titleTextView.setText(todo.getTitle());
         holder.detailsTextView.setText(todo.getDetails());
+
+        holder.finishedCheckBox.setOnCheckedChangeListener(null);
+        holder.finishedCheckBox.setChecked(todo.isFinished());
+        holder.finishedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                ToDoRepository repo = new ToDoRepository(mContext);
+                repo.updateToDo(todo.getId(), todo.getTitle(), todo.getDetails(), isChecked);
+            }
+        });
         holder.toDo = todo;
     }
 
@@ -48,6 +61,7 @@ public class ToDoListAdapter extends RecyclerView.Adapter<ToDoListAdapter.MyView
 
     class MyViewHolder extends RecyclerView.ViewHolder {
         private TextView titleTextView, detailsTextView;
+        private CheckBox finishedCheckBox;
         private ToDo toDo;
 
         public MyViewHolder(@NonNull View itemView) {
@@ -55,6 +69,7 @@ public class ToDoListAdapter extends RecyclerView.Adapter<ToDoListAdapter.MyView
 
             titleTextView = itemView.findViewById(R.id.title_text_view);
             detailsTextView = itemView.findViewById(R.id.details_text_view);
+            finishedCheckBox = itemView.findViewById(R.id.finished_check_box);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -64,6 +79,8 @@ public class ToDoListAdapter extends RecyclerView.Adapter<ToDoListAdapter.MyView
                     mContext.startActivity(intent);
                 }
             });
+
+
         }
     }
 }

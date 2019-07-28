@@ -15,6 +15,8 @@ public class ToDo implements Serializable {
     private String title;
     @ColumnInfo(name = "details")
     private String details;
+    @ColumnInfo(name = "finished")
+    private boolean finished;
     //@ColumnInfo(name = "due_date")
     //private Date dueDate;
 
@@ -40,6 +42,14 @@ public class ToDo implements Serializable {
 
     public void setDetails(String details) {
         this.details = details;
+    }
+
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public void setFinished(boolean finished) {
+        this.finished = finished;
     }
 
     /*public Date getDueDate() {
