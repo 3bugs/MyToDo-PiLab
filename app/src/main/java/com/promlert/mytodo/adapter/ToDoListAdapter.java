@@ -1,7 +1,6 @@
 package com.promlert.mytodo.adapter;
 
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,9 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.promlert.mytodo.R;
-import com.promlert.mytodo.UpdateToDoActivity;
 import com.promlert.mytodo.db.ToDo;
-import com.promlert.mytodo.db.ToDoRepository;
 
 import java.util.List;
 
@@ -23,10 +20,12 @@ public class ToDoListAdapter extends RecyclerView.Adapter<ToDoListAdapter.MyView
 
     private Context mContext;
     private List<ToDo> mToDoList;
+    private Callback mCallback;
 
-    public ToDoListAdapter(Context context, List<ToDo> toDoList) {
+    public ToDoListAdapter(Context context, List<ToDo> toDoList, Callback callback) {
         this.mContext = context;
         this.mToDoList = toDoList;
+        this.mCallback = callback;
     }
 
     @NonNull
@@ -47,8 +46,14 @@ public class ToDoListAdapter extends RecyclerView.Adapter<ToDoListAdapter.MyView
         holder.finishedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                ToDoRepository repo = new ToDoRepository(mContext);
+                /*ToDoRepository repo = new ToDoRepository(mContext);
                 repo.updateToDo(todo.getId(), todo.getTitle(), todo.getDetails(), isChecked);
+                todo.setFinished(isChecked);*/
+
+                if (mCallback != null) {
+                    todo.setFinished(isChecked);
+                    mCallback.onFinishedChange(todo);
+                }
             }
         });
         holder.toDo = todo;
@@ -60,11 +65,12 @@ public class ToDoListAdapter extends RecyclerView.Adapter<ToDoListAdapter.MyView
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {
+
         private TextView titleTextView, detailsTextView;
         private CheckBox finishedCheckBox;
         private ToDo toDo;
 
-        public MyViewHolder(@NonNull View itemView) {
+        MyViewHolder(@NonNull View itemView) {
             super(itemView);
 
             titleTextView = itemView.findViewById(R.id.title_text_view);
@@ -74,13 +80,16 @@ public class ToDoListAdapter extends RecyclerView.Adapter<ToDoListAdapter.MyView
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(mContext, UpdateToDoActivity.class);
-                    intent.putExtra("todo", toDo);
-                    mContext.startActivity(intent);
+                    if (mCallback != null) {
+                        mCallback.onItemClick(toDo);
+                    }
                 }
             });
-
-
         }
+    }
+
+    public interface Callback {
+        void onItemClick(ToDo toDo);
+        void onFinishedChange(ToDo toDo);
     }
 }

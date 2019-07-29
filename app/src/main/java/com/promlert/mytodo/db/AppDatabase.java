@@ -6,7 +6,7 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {ToDo.class}, version = 1)
+@Database(entities = {ToDo.class}, exportSchema = false, version = 1)
 public abstract class AppDatabase extends RoomDatabase {
 
     private static final String DB_NAME = "todo.db";
@@ -23,6 +23,12 @@ public abstract class AppDatabase extends RoomDatabase {
                             AppDatabase.class,
                             DB_NAME
                     )
+                    /*.addCallback(new Callback() {
+                        @Override
+                        public void onCreate(@NonNull SupportSQLiteDatabase db) {
+                            super.onCreate(db);
+                        }
+                    })*/
                     .build();
         }
         return mInstance;
