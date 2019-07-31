@@ -10,6 +10,7 @@ import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -72,6 +73,10 @@ public class ToDoListFragment extends Fragment {
         MainActivity activity = (MainActivity) getActivity();
         if (activity != null) {
             activity.setFabVisibility(View.VISIBLE);
+
+            Toolbar toolbar = activity.getToolbar();
+            toolbar.setNavigationIcon(null);
+            toolbar.setNavigationOnClickListener(null);
         }
     }
 

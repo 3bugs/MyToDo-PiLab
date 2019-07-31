@@ -12,8 +12,10 @@ import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 
+import com.promlert.mytodo.MainActivity;
 import com.promlert.mytodo.R;
 import com.promlert.mytodo.db.ToDo;
 import com.promlert.mytodo.etc.Utils;
@@ -150,6 +152,22 @@ public class AddToDoFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mCallback = null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        MainActivity activity = (MainActivity) getActivity();
+        if (activity != null) {
+            Toolbar toolbar = activity.getToolbar();
+            toolbar.setNavigationIcon(R.drawable.ic_back);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    activity.onBackPressed();
+                }
+            });
+        }
     }
 
     public interface AddToDoFragmentCallback {

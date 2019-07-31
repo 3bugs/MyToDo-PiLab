@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final String TAG_FRAGMENT_ADD_TODO = "fragment_add_todo";
     private static final String TAG_FRAGMENT_UPDATE_TODO = "fragment_update_todo";
 
+    private Toolbar mToolbar;
     private FloatingActionButton mFab;
     private ProgressBar mProgressBar;
 
@@ -64,8 +65,8 @@ public class MainActivity extends AppCompatActivity implements
     private void setupViews() {
         mProgressBar = findViewById(R.id.progress_bar);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mToolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
 
         mFab = findViewById(R.id.floating_action_button);
         mFab.setOnClickListener(new View.OnClickListener() {
@@ -199,5 +200,9 @@ public class MainActivity extends AppCompatActivity implements
 
     public void setFabVisibility(int visibility) {
         mFab.setVisibility(visibility);
+    }
+
+    public Toolbar getToolbar() {
+        return mToolbar;
     }
 }
