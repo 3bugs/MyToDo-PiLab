@@ -1,144 +1,133 @@
 package com.promlert.mytodo;
 
-import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.promlert.mytodo.adapter.ToDoListAdapter;
+import com.google.android.material.snackbar.Snackbar;
 import com.promlert.mytodo.db.ToDo;
+import com.promlert.mytodo.fragment.AddToDoFragment;
+import com.promlert.mytodo.fragment.ToDoListFragment;
+import com.promlert.mytodo.fragment.UpdateToDoFragment;
 import com.promlert.mytodo.net.ApiClient;
-import com.promlert.mytodo.net.GetToDoResponse;
 import com.promlert.mytodo.net.MyRetrofitCallback;
 import com.promlert.mytodo.net.UpdateToDoResponse;
 import com.promlert.mytodo.net.WebServices;
 
-import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.Retrofit;
 
-public class MainActivity extends AppCompatActivity implements ToDoListAdapter.Callback {
+public class MainActivity extends AppCompatActivity implements
+        ToDoListFragment.ToDoListFragmentCallback,
+        AddToDoFragment.AddToDoFragmentCallback,
+        UpdateToDoFragment.UpdateToDoFragmentCallback {
 
     private static final String TAG = MainActivity.class.getName();
-    static final int REQUEST_ADD = 0;
-    static final int REQUEST_UPDATE = 1;
+    private static final String TAG_FRAGMENT_TODO_LIST = "fragment_todo_list";
+    private static final String TAG_FRAGMENT_ADD_TODO = "fragment_add_todo";
+    private static final String TAG_FRAGMENT_UPDATE_TODO = "fragment_update_todo";
 
-    private RecyclerView mToDoRecyclerView;
+    private FloatingActionButton mFab;
     private ProgressBar mProgressBar;
+
+    protected enum FragmentTransitionType {
+        NONE,
+        SLIDE,
+        FADE
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mToDoRecyclerView = findViewById(R.id.todo_recycler_view);
-        mToDoRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+        setupViews();
 
+        FragmentManager fm = getSupportFragmentManager();
+        fm.beginTransaction()
+                .replace(
+                        R.id.fragment_container,
+                        new ToDoListFragment(),
+                        TAG_FRAGMENT_TODO_LIST
+                )
+                .commit();
+    }
+
+    private void setupViews() {
         mProgressBar = findViewById(R.id.progress_bar);
-        mProgressBar.setVisibility(View.GONE);
 
-        FloatingActionButton fab = findViewById(R.id.floating_action_button);
-        fab.setOnClickListener(new View.OnClickListener() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        mFab = findViewById(R.id.floating_action_button);
+        mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, AddToDoActivity.class);
-                startActivityForResult(intent, REQUEST_ADD);
+                onClickAdd();
             }
         });
-
-        reloadData();
-
-        /*ตัวอย่างการใช้ OkHttp (ก่อนเปลี่ยนมาใช้ Retrofit)*/
-        /*OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url("http://10.0.2.2:3000")
-                .build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e(TAG, e.getMessage());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String result = response.body().string();
-                Log.i(TAG, result);
-            }
-        });*/
     }
 
-    private void reloadData() {
-        /*ToDoRepository repo = new ToDoRepository(MainActivity.this);
-        repo.getAllToDo(new ToDoRepository.Callback() {
-            @Override
-            public void onGetTodo(List<ToDo> todoList) {
-                for (ToDo todo : todoList) {
-                    Log.i(TAG, todo.getTitle());
-                }
-                ToDoListAdapter adapter = new ToDoListAdapter(MainActivity.this, todoList);
-                mToDoRecyclerView.setAdapter(adapter);
-            }
-        });*/
-
-        mProgressBar.setVisibility(View.VISIBLE);
-
-        Retrofit retrofit = ApiClient.getClient();
-        WebServices services = retrofit.create(WebServices.class);
-        Call<GetToDoResponse> call = services.getAllTodo();
-        call.enqueue(new MyRetrofitCallback<>(
-                MainActivity.this,
-                null,
-                mProgressBar,
-                new MyRetrofitCallback.MyRetrofitCallbackListener<GetToDoResponse>() {
-                    @Override
-                    public void onSuccess(GetToDoResponse responseBody) {
-                        List<ToDo> toDoList = responseBody.data;
-                        ToDoListAdapter adapter = new ToDoListAdapter(
-                                MainActivity.this, // context
-                                toDoList, // data source
-                                MainActivity.this // callback สำหรับ adapter (เมธอด onItemClick ข้างล่าง)
-                        );
-                        mToDoRecyclerView.setAdapter(adapter);
-                    }
-
-                    @Override
-                    public void onError(String errorMessage) {
-                        new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Error")
-                                .setMessage(errorMessage)
-                                .setPositiveButton("OK", null)
-                                .show();
-                    }
-                }
-        ));
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_ADD || requestCode == REQUEST_UPDATE) {
-            if (resultCode == RESULT_OK) { // มีการเพิ่มหรืออัพเดทฐานข้อมูล
-                mToDoRecyclerView.setAdapter(null); // ล้าง item เดิมใน RecyclerView ไปก่อน
-                reloadData(); // โหลดมาใหม่
-            }
+    protected void loadFragment(Fragment fragment, String tag, boolean addToBackStack,
+                                FragmentTransitionType transitionType) {
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        if (transitionType == FragmentTransitionType.SLIDE) {
+            transaction.setCustomAnimations(
+                    R.anim.enter_from_right,
+                    R.anim.exit_to_left,
+                    R.anim.enter_from_left,
+                    R.anim.exit_to_right
+            );
+        } else if (transitionType == FragmentTransitionType.FADE) {
+            transaction.setCustomAnimations(
+                    R.anim.fade_in,
+                    R.anim.fade_out,
+                    R.anim.fade_in,
+                    R.anim.fade_out
+            );
+        }
+        transaction.replace(
+                R.id.fragment_container,
+                fragment,
+                tag
+        );
+        if (addToBackStack) {
+            transaction.addToBackStack(null).commit();
+        } else {
+            transaction.commit();
         }
     }
 
+    protected void popBackStack() {
+        FragmentManager fm = getSupportFragmentManager();
+        fm.popBackStack();
+    }
+
+    public void onClickAdd() {
+        loadFragment(
+                new AddToDoFragment(),
+                TAG_FRAGMENT_ADD_TODO,
+                true,
+                FragmentTransitionType.FADE
+        );
+    }
+
     @Override
-    public void onItemClick(ToDo toDo) {
-        Intent intent = new Intent(MainActivity.this, UpdateToDoActivity.class);
-        intent.putExtra("todo", toDo);
-        startActivityForResult(intent, REQUEST_UPDATE);
+    public void onClickItem(ToDo toDo) {
+        loadFragment(
+                UpdateToDoFragment.newInstance(toDo),
+                TAG_FRAGMENT_UPDATE_TODO,
+                true,
+                FragmentTransitionType.SLIDE
+        );
     }
 
     @Override
@@ -156,7 +145,12 @@ public class MainActivity extends AppCompatActivity implements ToDoListAdapter.C
                     @Override
                     public void onSuccess(UpdateToDoResponse responseBody) {
                         String successMessage = responseBody.error.getMessage();
-                        Toast.makeText(MainActivity.this, successMessage, Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getActivity(), successMessage, Toast.LENGTH_SHORT).show();
+                        Snackbar.make(
+                                findViewById(R.id.content),
+                                successMessage,
+                                Snackbar.LENGTH_LONG
+                        ).show();
                     }
 
                     @Override
@@ -169,5 +163,41 @@ public class MainActivity extends AppCompatActivity implements ToDoListAdapter.C
                     }
                 }
         ));
+    }
+
+    @Override
+    public void onAddSuccess(String successMessage) {
+        handleAddUpdateChangeSuccess(successMessage);
+    }
+
+    @Override
+    public void onUpdateSuccess(String successMessage) {
+        handleAddUpdateChangeSuccess(successMessage);
+    }
+
+    @Override
+    public void onDeleteSuccess(String successMessage) {
+        handleAddUpdateChangeSuccess(successMessage);
+    }
+
+    private void handleAddUpdateChangeSuccess(String successMessage) {
+        popBackStack();
+        Snackbar.make(
+                findViewById(R.id.content),
+                successMessage,
+                Snackbar.LENGTH_LONG
+        ).show();
+
+        ToDoListFragment fragment = (ToDoListFragment)
+                getSupportFragmentManager().findFragmentByTag(TAG_FRAGMENT_TODO_LIST);
+        if (fragment != null) {
+            fragment.reloadData();
+        } else {
+            Log.w(TAG, "ToDoListFragment NOT FOUND!");
+        }
+    }
+
+    public void setFabVisibility(int visibility) {
+        mFab.setVisibility(visibility);
     }
 }

@@ -1,18 +1,23 @@
-package com.promlert.mytodo;
+package com.promlert.mytodo.fragment;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
+import com.google.gson.Gson;
+import com.promlert.mytodo.R;
 import com.promlert.mytodo.db.ToDo;
 import com.promlert.mytodo.etc.DateFormatConverter;
 import com.promlert.mytodo.etc.Utils;
@@ -27,7 +32,10 @@ import java.util.Calendar;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 
-public class UpdateToDoActivity extends AppCompatActivity {
+public class UpdateToDoFragment extends Fragment {
+
+    private static final String TAG = UpdateToDoFragment.class.getName();
+    private static final String ARG_JSON_TODO = "json_todo";
 
     private EditText mTitleEditText, mDetailsEditText, mDueDateEditText;
     private CheckBox mFinishedCheckBox;
@@ -36,18 +44,43 @@ public class UpdateToDoActivity extends AppCompatActivity {
     private Calendar mCalendar = Calendar.getInstance();
     private ToDo mToDo;
 
+    private UpdateToDoFragmentCallback mCallback;
+
+    public UpdateToDoFragment() {
+        // Required empty public constructor
+    }
+
+    public static UpdateToDoFragment newInstance(ToDo toDo) {
+        UpdateToDoFragment fragment = new UpdateToDoFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_JSON_TODO, new Gson().toJson(toDo));
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_update_to_do);
+        if (getArguments() != null) {
+            String jsonToDo = getArguments().getString(ARG_JSON_TODO);
+            mToDo = new Gson().fromJson(jsonToDo, ToDo.class);
+        }
+    }
 
-        Intent intent = getIntent();
-        mToDo = (ToDo) intent.getSerializableExtra("todo");
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_update_to_do, container, false);
+    }
 
-        mTitleEditText = findViewById(R.id.title_edit_text);
-        mDetailsEditText = findViewById(R.id.details_edit_text);
-        mFinishedCheckBox = findViewById(R.id.finished_check_box);
-        mDueDateEditText = findViewById(R.id.due_date_edit_text);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        mTitleEditText = view.findViewById(R.id.title_edit_text);
+        mDetailsEditText = view.findViewById(R.id.details_edit_text);
+        mFinishedCheckBox = view.findViewById(R.id.finished_check_box);
+        mDueDateEditText = view.findViewById(R.id.due_date_edit_text);
 
         mTitleEditText.setText(mToDo.getTitle());
         mDetailsEditText.setText(mToDo.getDetails());
@@ -57,12 +90,12 @@ public class UpdateToDoActivity extends AppCompatActivity {
         String formatDate = DateFormatConverter.formatForUi(mCalendar.getTime());
         mDueDateEditText.setText(formatDate);
 
-        mProgressBar = findViewById(R.id.progress_bar);
+        mProgressBar = view.findViewById(R.id.progress_bar);
         mProgressBar.setVisibility(View.GONE);
 
-        Utils.setupDatePicker(UpdateToDoActivity.this, mCalendar, mDueDateEditText);
+        Utils.setupDatePicker(getActivity(), mCalendar, mDueDateEditText);
 
-        Button saveButton = findViewById(R.id.save_button);
+        Button saveButton = view.findViewById(R.id.save_button);
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -70,26 +103,24 @@ public class UpdateToDoActivity extends AppCompatActivity {
             }
         });
 
-        Button deleteButton = findViewById(R.id.delete_button);
+        Button deleteButton = view.findViewById(R.id.delete_button);
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AlertDialog.Builder(UpdateToDoActivity.this)
+                new AlertDialog.Builder(getActivity())
                         .setTitle(R.string.app_name)
                         .setMessage("ยืนยันลบ ToDo นี้หรือไม่?")
                         .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                /*ToDoRepository repo = new ToDoRepository(UpdateToDoActivity.this);
-                                repo.deleteToDo(mToDo.getId());*/
                                 deleteToDo();
-                                finish();
                             }
                         })
                         .setNegativeButton("Cancel", null)
                         .show();
             }
         });
+
     }
 
     private void updateToDo() {
@@ -97,9 +128,6 @@ public class UpdateToDoActivity extends AppCompatActivity {
             String title = mTitleEditText.getText().toString().trim();
             String details = mDetailsEditText.getText().toString().trim();
             boolean finished = mFinishedCheckBox.isChecked();
-
-            /*ToDoRepository repo = new ToDoRepository(UpdateToDoActivity.this);
-            repo.updateToDo(mToDo.getId(), title, details, finished);*/
 
             ToDo toDo = new ToDo();
             toDo.setId(mToDo.getId());
@@ -114,21 +142,21 @@ public class UpdateToDoActivity extends AppCompatActivity {
             WebServices services = retrofit.create(WebServices.class);
             Call<UpdateToDoResponse> call = services.updateTodo(toDo);
             call.enqueue(new MyRetrofitCallback<>(
-                    UpdateToDoActivity.this,
+                    getActivity(),
                     null,
                     mProgressBar,
                     new MyRetrofitCallback.MyRetrofitCallbackListener<UpdateToDoResponse>() {
                         @Override
                         public void onSuccess(UpdateToDoResponse responseBody) {
-                            String successMessage = responseBody.error.getMessage();
-                            Toast.makeText(UpdateToDoActivity.this, successMessage, Toast.LENGTH_SHORT).show();
-                            setResult(RESULT_OK);
-                            finish();
+                            if (mCallback != null) {
+                                String successMessage = responseBody.error.getMessage();
+                                mCallback.onUpdateSuccess(successMessage);
+                            }
                         }
 
                         @Override
                         public void onError(String errorMessage) {
-                            new androidx.appcompat.app.AlertDialog.Builder(UpdateToDoActivity.this)
+                            new androidx.appcompat.app.AlertDialog.Builder(getActivity())
                                     .setTitle("Error")
                                     .setMessage(errorMessage)
                                     .setPositiveButton("OK", null)
@@ -149,21 +177,21 @@ public class UpdateToDoActivity extends AppCompatActivity {
         WebServices services = retrofit.create(WebServices.class);
         Call<DeleteToDoResponse> call = services.deleteTodo(toDo);
         call.enqueue(new MyRetrofitCallback<>(
-                UpdateToDoActivity.this,
+                getActivity(),
                 null,
                 mProgressBar,
                 new MyRetrofitCallback.MyRetrofitCallbackListener<DeleteToDoResponse>() {
                     @Override
                     public void onSuccess(DeleteToDoResponse responseBody) {
-                        String successMessage = responseBody.error.getMessage();
-                        Toast.makeText(UpdateToDoActivity.this, successMessage, Toast.LENGTH_SHORT).show();
-                        setResult(RESULT_OK);
-                        finish();
+                        if (mCallback != null) {
+                            String successMessage = responseBody.error.getMessage();
+                            mCallback.onDeleteSuccess(successMessage);
+                        }
                     }
 
                     @Override
                     public void onError(String errorMessage) {
-                        new androidx.appcompat.app.AlertDialog.Builder(UpdateToDoActivity.this)
+                        new androidx.appcompat.app.AlertDialog.Builder(getActivity())
                                 .setTitle("Error")
                                 .setMessage(errorMessage)
                                 .setPositiveButton("OK", null)
@@ -189,5 +217,27 @@ public class UpdateToDoActivity extends AppCompatActivity {
         }
 
         return valid;
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (context instanceof UpdateToDoFragmentCallback) {
+            mCallback = (UpdateToDoFragmentCallback) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement UpdateToDoFragmentCallback");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallback = null;
+    }
+
+    public interface UpdateToDoFragmentCallback {
+        void onUpdateSuccess(String successMessage);
+        void onDeleteSuccess(String successMessage);
     }
 }

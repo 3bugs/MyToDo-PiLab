@@ -26,17 +26,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".UpdateToDoActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".AddToDoActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:screenOrientation="portrait" />
-        <activity
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>
